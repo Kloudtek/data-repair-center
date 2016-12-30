@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+      xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <db:generic-config name="Generic_Database_Configuration" url="${db.url}" driverClassName="org.postgresql.Driver" doc:name="Generic Database Configuration"/>
+
+    <sub-flow name="db-insert">
+        <logger category="drc.db" message="Persisting data (pre-conversion) for #[flowVars.id]: #[payload]" level="DEBUG" doc:name="Logger"/>
+        <flow-ref name="convertMetadataToJson" doc:name="convertMetadataToJson"/>
+        <db:insert config-ref="Generic_Database_Configuration" doc:name="Insert data in db">
+            <db:parameterized-query><![CDATA[INSERT INTO DATA_REPAIR_QUEUE (id,timestamp,bid,mime_type,data_type,origin,origin_id,retry,cid,data,metadata)
+             VALUES ( #[flowVars.id], #[flowVars.timestamp], #[flowVars.businessId], #[flowVars.mimeType], #[flowVars.dataType], #[flowVars.origin], #[flowVars.originId], #[flowVars.retry], #[flowVars.correlationId], #[payload], #[flowVars.metaAsJson] )]]></db:parameterized-query>
+        </db:insert>
+    </sub-flow>
+
+    <sub-flow name="db-update">
+        <logger category="drc.db" message="Updating data for #[flowVars.id]: #[payload]" level="DEBUG" doc:name="Logger"/>
+        <flow-ref name="convertMetadataToJson" doc:name="convertMetadataToJson"/>
+        <db:update config-ref="Generic_Database_Configuration" doc:name="Update data in db">
+            <db:parameterized-query><![CDATA[UPDATE DATA_REPAIR_QUEUE SET metadata = #[flowVars.metaAsJson], bid = #[flowVars.businessId], mime_type = #[flowVars.mimeType], data_type = #[flowVars.dataType], origin = #[flowVars.origin], origin_id = #[flowVars.originId], cid = #[flowVars.correlationId], data = #[payload] WHERE id = #[flowVars.id]]]></db:parameterized-query>
+        </db:update>
+        <logger category="drc.rest" message="Updated #[flowVars.id]" level="INFO" doc:name="Logger"/>
+    </sub-flow>
+
+    <sub-flow name="db-list">
+        <enricher target="variable:count" doc:name="Message Enricher">
+            <processor-chain doc:name="Processor Chain">
+                <db:select config-ref="Generic_Database_Configuration" doc:name="Database">
+                    <db:parameterized-query><![CDATA[select count(id) from DATA_REPAIR_QUEUE]]></db:parameterized-query>
+                </db:select>
+                <set-payload value="#[payload[0].count]" mimeType="application/java" doc:name="Set Payload"/>
+            </processor-chain>
+        </enricher>
+        <db:select config-ref="Generic_Database_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[select id,timestamp,bid,mime_type,data_type,origin,origin_id,retry,cid from DATA_REPAIR_QUEUE LIMIT #[flowVars.limit] OFFSET #[flowVars.offset]]]></db:parameterized-query>
+        </db:select>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%input payload application/java
+%output application/json
+---
+{
+    count: flowVars.count,
+    offset: flowVars.offset,
+    results: payload map {
+        id: $.id,
+        businessId: $.bid,
+        mimeType: $.mime_type,
+        dataType: $.data_type,
+        origin: $.origin,
+        originId: $.origin_id,
+        retry: $.retry,
+        timestamp: $.timestamp,
+        correlationId: $.cid
+    }
+}
+]]></dw:set-payload>
+        </dw:transform-message>
+    </sub-flow>
+
+    <sub-flow name="db-get">
+        <db:select config-ref="Generic_Database_Configuration" doc:name="Database">
+            <db:parameterized-query><![CDATA[select id,timestamp,bid,mime_type,data_type,origin,origin_id,retry,cid,data,metadata from DATA_REPAIR_QUEUE WHERE id = #[flowVars.id]]]></db:parameterized-query>
+        </db:select>
+        <choice doc:name="Choice">
+            <when expression="#[payload.isEmpty()]">
+                <component doc:name="Throw MuleMessageNotFoundException" class="com.kloudtek.drc.mule.MuleMessageNotFoundException"/>
+            </when>
+            <otherwise>
+                <set-payload value="#[payload[0]]" mimeType="application/java" doc:name="Set Payload"/>
+                <set-variable variableName="data" value="#[java.util.Base64.getEncoder().encodeToString(payload.data)]" doc:name="Set 'data' as base64 text"/>
+                <enricher target="variable:metadata" doc:name="Message Enricher">
+                    <processor-chain doc:name="Processor Chain">
+                        <set-payload value="#[payload.metadata]" mimeType="application/json" doc:name="Set Payload"/>
+                        <dw:transform-message doc:name="Transform Message">
+                            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-payload>
+                        </dw:transform-message>
+                    </processor-chain>
+                </enricher>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%input payload application/java
+%output application/java
+%var p=payload
+---
+{
+    id: p.id,
+    businessId: p.bid,
+    mimeType: p.mime_type,
+    dataType: p.data_type,
+    origin: p.origin,
+    originId: p.origin_id,
+    retry: p.retry,
+    timestamp: p.timestamp,
+    correlationId: p.cid,
+    metadata: flowVars.metadata,
+    data: flowVars.data
+}
+]]></dw:set-payload>
+                </dw:transform-message>
+            </otherwise>
+        </choice>
+    </sub-flow>
+</mule>

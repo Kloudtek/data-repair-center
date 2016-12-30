@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+    <flow name="send-data">
+		<logger category="drc.sender.router" message="Sending payload #[flowVars.id]" level="DEBUG" doc:name="Logger"/>
+		<choice doc:name="Choice">
+			<when expression="#[payload.origin == 'sqs']">
+				<flow-ref name="send-sqs" doc:name="send-sqs"/>
+			</when>
+			<otherwise>
+				<set-payload value="#[payload.origin]" doc:name="Set origin"/>
+				<component doc:name="Throw MuleMessageNotFoundException" class="com.kloudtek.drc.mule.UnsupportedOriginException"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

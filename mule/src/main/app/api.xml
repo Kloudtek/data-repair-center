@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:cors="http://www.mulesoft.org/schema/mule/cors" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+
+
+http://www.mulesoft.org/schema/mule/cors http://www.mulesoft.org/schema/mule/cors/current/mule-cors.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <apikit:config name="api-config" raml="api.raml" consoleEnabled="false" doc:name="Router"/>
+    <flow name="api-main">
+        <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
+        <cors:validate config-ref="corsConfig" doc:name="CORS Validate"/>
+        <apikit:router config-ref="api-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="put:/messages:api-config">
+        <logger category="drc.rest" message="Inserting data: #[message] : #[payload]" level="DEBUG" doc:name="Logger"/>
+        <flow-ref name="convertJsonToVars" doc:name="convertVarsToJson"/>
+        <flow-ref name="insert-data" doc:name="insert-data"/>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload resource="classpath:data-insert-results.dwl"/>
+        </dw:transform-message>
+        <exception-strategy ref="global-exception-strategy" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="get:/messages:api-config">
+        <set-variable variableName="offset" value="#[Integer.parseInt(message.inboundProperties.'http.query.params'.offset)]" doc:name="Set offset"/>
+        <set-variable variableName="limit" value="#[Integer.parseInt(message.inboundProperties.'http.query.params'.limit)]" doc:name="Set limit"/>
+        <logger category="drc.rest" message="List of messages requested with limit #[flowVars.limit] and offset #[flowVars.offset]" level="DEBUG" doc:name="Logger"/>
+        <flow-ref name="db-list" doc:name="db-list"/>
+    </flow>
+
+    <flow name="get:/messages/{id}:api-config">
+        <flow-ref name="db-get" doc:name="db-get"/>
+        <flow-ref name="convertPayloadToJson" doc:name="convertPayloadToJson"/>
+    </flow>
+
+    <flow name="put:/messages/{id}:api-config">
+        <choice doc:name="Choice">
+            <when expression="#[message.inboundProperties.'http.query.params'.submit]">
+                <flow-ref name="convertPayloadToJava" doc:name="convertPayloadToJava"/>
+                <flow-ref name="prepareForRetry" doc:name="prepareForRetry"/>
+                <flow-ref name="send-data" doc:name="send-data"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="id" value="#[message.inboundProperties.'http.uri.params'.id]" doc:name="Set 'id'"/>
+                <flow-ref name="convertJsonToVars" doc:name="convertVarsToJson"/>
+                <flow-ref name="db-update" doc:name="db-update"/>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <flow name="post:/messages/{id}:api-config">
+        <set-variable variableName="id" value="#[message.inboundProperties.'http.uri.params'.id]" doc:name="Set 'id'"/>
+        <flow-ref name="db-get" doc:name="db-get"/>
+        <flow-ref name="prepareForRetry" doc:name="prepareForRetry"/>
+        <flow-ref name="send-data" doc:name="send-data"/>
+    </flow>
+
+    <apikit:mapping-exception-strategy name="api-apiKitGlobalExceptionMapping">
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="com.kloudtek.drc.mule.UnsupportedOriginException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;#[exception.cause.message]&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="com.kloudtek.drc.mule.MuleMessageNotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Message not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+</mule>

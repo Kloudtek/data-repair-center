@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs" xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd">
+    <flow name="send-sqs">
+        <sqs:send-message config-ref="Amazon_SQS__Configuration" queueUrl="#[payload.originId]" doc:name="Send to origin queue"/>
+        <logger category="drc.sender.sqs" message="Sent message #[payload.id] to sqs queue #[payload.originId]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>

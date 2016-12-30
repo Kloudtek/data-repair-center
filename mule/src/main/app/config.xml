@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	  xmlns:secure-property-placeholder="http://www.mulesoft.org/schema/mule/secure-property-placeholder"
+	  xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cors="http://www.mulesoft.org/schema/mule/cors"
+	  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/cors http://www.mulesoft.org/schema/mule/cors/current/mule-cors.xsd
+http://www.mulesoft.org/schema/mule/secure-property-placeholder http://www.mulesoft.org/schema/mule/secure-property-placeholder/current/mule-secure-property-placeholder.xsd">
+	<http:listener-config name="api-httpListenerConfig" host="${http.host}" port="${http.port}" doc:name="HTTP Listener Configuration"/>
+	<secure-property-placeholder:config name="Secure_Property_Placeholder" key="${mule.key}" location="config-${mule.env}.properties" ignoreResourceNotFound="true"/>
+	<cors:config name="corsConfig" doc:name="Cors">
+		<cors:origins>
+			<cors:origin url="${http.cors.origin}" accessControlMaxAge="${http.cors.age}">
+				<cors:methods>
+					<cors:method>GET</cors:method>
+					<cors:method>PUT</cors:method>
+					<cors:method>POST</cors:method>
+					<cors:method>DELETE</cors:method>
+				</cors:methods>
+			</cors:origin>
+		</cors:origins>
+	</cors:config>
+</mule>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+
+    <sub-flow name="insert-data">
+        <flow-ref name="generateIdAndTimestamp" doc:name="generateIdAndTimestamp"/>
+        <flow-ref name="db-insert" doc:name="db-insert"/>
+        <logger message="Received Data: #[flowVars.id]:#[flowVars.correlationId] from #[flowVars.origin]" level="INFO" doc:name="Logger"/>
+    </sub-flow>
+
+    <sub-flow name="convertVarsToJson">
+        <object-to-byte-array-transformer doc:name="Convert payload to byte array"/>
+		<base64-encoder-transformer mimeType="application/java" doc:name="Convert byte array to Base64 String" />
+        <dw:transform-message doc:name="generate JSON">
+            <dw:set-payload resource="classpath:vars-to-json.dwl"/>
+        </dw:transform-message>
+    </sub-flow>
+
+    <sub-flow name="convertJsonToVars">
+        <flow-ref name="convertPayloadToJava" doc:name="convertPayloadToJava"/>
+        <set-variable variableName="businessId" value="#[payload.businessId]" doc:name="Set 'businessId'"/>
+        <set-variable variableName="mimeType" value="#[payload.mimeType]" doc:name="Set 'mimeType'"/>
+        <set-variable variableName="dataType" value="#[payload.dataType]" doc:name="Set 'dataType'"/>
+        <set-variable variableName="origin" value="#[payload.origin]" doc:name="Set 'origin'"/>
+        <set-variable variableName="originId" value="#[payload.originId]" doc:name="Set 'originId'"/>
+        <set-variable variableName="retry" value="#[payload.retry]" doc:name="Set 'retry'"/>
+        <set-variable variableName="correlationId" value="#[payload.correlationId]" doc:name="Set 'correlationId'"/>
+        <set-variable variableName="metadata" value="#[payload.metadata]" doc:name="Set 'metadata'"/>
+        <set-payload value="#[payload.data]" doc:name="Set payload"/>
+        <base64-decoder-transformer doc:name="Convert Base64 String to byte array"/>
+    </sub-flow>
+
+    <sub-flow name="convertMetadataToJson">
+        <enricher target="variable:metaAsJson" doc:name="Message Enricher">
+            <processor-chain doc:name="Processor Chain">
+	            <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload resource="classpath:meta-to-json.dwl"/>
+	            </dw:transform-message>
+                <object-to-string-transformer doc:name="Convert stream to string"/>
+                <logger message="Generated metadata JSON: #[payload]" level="DEBUG" doc:name="Logger"/>
+        	</processor-chain>
+        </enricher>
+    </sub-flow>
+
+    <sub-flow name="prepareForRetry">
+    	<set-variable variableName="retry" value="#[flowVars.retry != null ? flowVars.retry + 1 : 1 ]" doc:name="Increase retry"/>
+    </sub-flow>
+
+    <sub-flow name="convertPayloadToJava">
+        <dw:transform-message doc:name="Convert JSON to Java">
+            <dw:set-payload resource="classpath:to-java.dwl"/>
+        </dw:transform-message>
+    </sub-flow>
+
+    <sub-flow name="convertPayloadToJson">
+        <dw:transform-message doc:name="Convert JSON to Java">
+            <dw:set-payload resource="classpath:to-json.dwl"/>
+        </dw:transform-message>
+    </sub-flow>
+
+    <sub-flow name="generateIdAndTimestamp">
+        <set-variable variableName="id" value="#[com.kloudtek.util.DataUtils.uuidToB32Str( java.util.UUID.randomUUID() )]" doc:name="Generate drc id"/>
+        <set-variable variableName="timestamp" value="#[new java.util.Date()]" doc:name="Generate timestamp"/>
+    </sub-flow>
+
+    <rollback-exception-strategy name="global-exception-strategy">
+        <logger level="ERROR" doc:name="Logger" message="#[org.mule.util.ExceptionUtils.getFullStackTrace(exception)]"/>
+    </rollback-exception-strategy>
+</mule>
