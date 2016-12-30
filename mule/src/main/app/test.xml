@@ -10,9 +10,7 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-
 http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
-
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
     <flow name="testFlow">
         <http:listener config-ref="api-httpListenerConfig" path="/test" doc:name="HTTP"/>
@@ -32,7 +30,7 @@ payload]]></dw:set-payload>
         <choice doc:name="Choice">
             <when expression="#[payload.valid == 'true']">
                 <logger message="payload is valid: #[payload]" level="INFO" doc:name="Logger"/>
-                <sqs:delete-message config-ref="Amazon_SQS__Configuration" doc:name="Amazon SQS" queueUrl="https://sqs.us-east-1.amazonaws.com/148911335818/devDQLTest" />
+                <sqs:delete-message config-ref="Amazon_SQS__Configuration" doc:name="Delete message" queueUrl="https://sqs.us-east-1.amazonaws.com/148911335818/devDQLTest" />
             </when>
             <otherwise>
                 <logger message="payload is not valid: #[payload]" level="INFO" doc:name="Logger"/>

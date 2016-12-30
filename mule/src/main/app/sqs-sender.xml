@@ -8,9 +8,13 @@
       xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+
 http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd">
     <flow name="send-sqs">
-        <sqs:send-message config-ref="Amazon_SQS__Configuration" queueUrl="#[payload.originId]" doc:name="Send to origin queue"/>
-        <logger category="drc.sender.sqs" message="Sent message #[payload.id] to sqs queue #[payload.originId]" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="queueUrl" value="#[payload.originId]" doc:name="Variable"/>
+        <set-variable variableName="metadata" value="#[payload.metadata]" doc:name="Variable"/>
+        <component class="com.kloudtek.drc.mule.CreateSQSMessage" doc:name="CreateSQSMessage"/>
+        <sqs:send-message config-ref="Amazon_SQS__Configuration" queueUrl="#[flowVars.queueUrl]" doc:name="Send to origin queue"/>
+        <logger category="drc.sender.sqs" message="Sent message #[payload.id] to sqs queue #[flowVars.queueUrl]" level="INFO" doc:name="Logger"/>
     </flow>
 </mule>

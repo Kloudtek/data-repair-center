@@ -8,7 +8,6 @@
       xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
     <db:generic-config name="Generic_Database_Configuration" url="${db.url}" driverClassName="org.postgresql.Driver" doc:name="Generic Database Configuration"/>
@@ -28,8 +27,17 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
         <db:update config-ref="Generic_Database_Configuration" doc:name="Update data in db">
             <db:parameterized-query><![CDATA[UPDATE DATA_REPAIR_QUEUE SET metadata = #[flowVars.metaAsJson], bid = #[flowVars.businessId], mime_type = #[flowVars.mimeType], data_type = #[flowVars.dataType], origin = #[flowVars.origin], origin_id = #[flowVars.originId], cid = #[flowVars.correlationId], data = #[payload] WHERE id = #[flowVars.id]]]></db:parameterized-query>
         </db:update>
-        <logger category="drc.rest" message="Updated #[flowVars.id]" level="INFO" doc:name="Logger"/>
+        <logger category="drc.db" message="Updated data #[flowVars.id]" level="DEBUG" doc:name="Logger"/>
     </sub-flow>
+
+    <sub-flow name="db-delete">
+        <logger category="drc.db" message="Updating data for #[flowVars.id]: #[payload]" level="DEBUG" doc:name="Logger"/>
+        <db:delete config-ref="Generic_Database_Configuration" doc:name="Delete data">
+            <db:parameterized-query><![CDATA[delete from DATA_REPAIR_QUEUE WHERE id = #[flowVars.id]]]></db:parameterized-query>
+        </db:delete>
+        <logger category="drc.db" message="Deleted data #[flowVars.id]" level="INFO" doc:name="Logger"/>
+    </sub-flow>
+
 
     <sub-flow name="db-list">
         <enricher target="variable:count" doc:name="Message Enricher">

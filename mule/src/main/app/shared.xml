@@ -16,6 +16,12 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
         <logger message="Received Data: #[flowVars.id]:#[flowVars.correlationId] from #[flowVars.origin]" level="INFO" doc:name="Logger"/>
     </sub-flow>
 
+    <sub-flow name="send-data">
+        <set-variable variableName="data" value="#[java.util.Base64.getDecoder().decode(payload.data)]" doc:name="Set 'data' as base64 text"/>
+        <flow-ref name="route-data" doc:name="route-data"/>
+        <flow-ref name="db-delete" doc:name="db-delete"/>
+    </sub-flow>
+
     <sub-flow name="convertVarsToJson">
         <object-to-byte-array-transformer doc:name="Convert payload to byte array"/>
 		<base64-encoder-transformer mimeType="application/java" doc:name="Convert byte array to Base64 String" />

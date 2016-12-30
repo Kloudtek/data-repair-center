@@ -8,9 +8,7 @@
       xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-
 http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd">
     <sqs:config name="Amazon_SQS__Configuration" accessKey="${sqs.accesskey}" secretKey="${sqs.secretkey}" doc:name="Amazon SQS: Configuration" url="${sqs.queueUrl}"/>
     <flow name="dlq-consume-sqs">
