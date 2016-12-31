@@ -121,3 +121,7 @@ config-local.properties
 
 ### Logs
 *.log
+
+### angular
+
+node_modules

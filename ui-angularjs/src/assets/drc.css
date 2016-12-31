@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2016. Kloudtek Software Solutions Ltd
+ */
+
+.acenter {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    /* bring your own prefixes */
+    transform: translate(-50%, -50%);
+}
+
+.center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+footer {
+    text-align: center;
+    font-size: smaller;
+}

@@ -38,6 +38,18 @@ types:
       timestamp:
         type: datetime-only
         description: Timestamp at which the message was received last by the DLQ Manager
+  DLQMsgOverviewList:
+    type: object
+    properties:
+      count:
+        type: number
+        required: true
+      offset:
+        type: number
+        required: true
+      results:
+        type: DLQMsgOverview[]
+        required: true
   DLQMsgData:
     type: object
     properties:

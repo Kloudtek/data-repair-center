@@ -254,10 +254,6 @@
 	  &quot;m2&quot;: {&#xd;
 	    &quot;type&quot;: &quot;Number&quot;,&#xd;
 	    &quot;value&quot;: &quot;123&quot;&#xd;
-	  },&#xd;
-	  &quot;m3&quot;: {&#xd;
-	    &quot;type&quot;: &quot;Binary&quot;,&#xd;
-	    &quot;value&quot;: &quot;YmxhYmxh&quot;&#xd;
 	  }&#xd;
 	},&#xd;
 	&quot;data&quot;: &quot;eyJ2YWxpZCI6ICJ0cnVlIn0=&quot;&#xd;
