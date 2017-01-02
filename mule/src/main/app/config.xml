@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
   -->
 
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
@@ -22,7 +22,11 @@ http://www.mulesoft.org/schema/mule/secure-property-placeholder http://www.mules
 					<cors:method>PUT</cors:method>
 					<cors:method>POST</cors:method>
 					<cors:method>DELETE</cors:method>
+					<cors:method>OPTIONS</cors:method>
 				</cors:methods>
+				<cors:headers>
+					<cors:header>content-type</cors:header>
+				</cors:headers>
 			</cors:origin>
 		</cors:origins>
 	</cors:config>

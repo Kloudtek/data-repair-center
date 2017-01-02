@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+    <sub-flow name="sqs-consume-dlq">
+        <set-variable doc:name="Create new metadata" value="#[new java.util.HashMap()]" variableName="metadata"/>
+        <foreach collection="#[message.inboundProperties]" doc:name="For Each">
+            <choice doc:name="Choice">
+                <when expression="#[payload instanceof org.mule.modules.sqs.model.MessageAttributeValue]">
+                    <logger message="Adding SQS value: #[flowVars.key] of type #[payload.getDataType()]" level="DEBUG" category="drc.dlq.sqs" doc:name="Logger"/>
+                    <set-variable doc:name="Create new metael" value="#[new java.util.HashMap()]" variableName="metael"/>
+                    <expression-component doc:name="Set 'metael.type'"><![CDATA[flowVars.metael.type = payload.getDataType();
+					]]></expression-component>
+                    <choice doc:name="Choice">
+                        <when expression="#[payload.getDataType() == 'Binary']">
+                            <logger message="data is binary" level="INFO" doc:name="Logger"/>
+                            <expression-component doc:name="Set binary 'metael.value'"><![CDATA[flowVars.metael.value = java.util.Base64.getEncoder().encodeToString(payload.getBinaryValue().array())]]></expression-component>
+                        </when>
+                        <otherwise>
+                            <logger message="data is string" level="INFO" doc:name="Logger"/>
+                            <expression-component doc:name="Set string 'metael.value'"><![CDATA[flowVars.metael.value = payload.getStringValue()]]></expression-component>
+                        </otherwise>
+                    </choice>
+                    <expression-component doc:name="Assign metael to metadata"><![CDATA[flowVars.metadata.put( flowVars.key , flowVars.metael);]]></expression-component>
+                </when>
+                <otherwise>
+                    <logger message="SQS inbound prop value ignored: #[flowVars.key]" level="DEBUG" category="drc.dlq.sqs" doc:name="log value ignored"/>
+                </otherwise>
+            </choice>
+        </foreach>
+        <set-variable variableName="origin" value="sqs" doc:name="Set origin"/>
+        <object-to-byte-array-transformer doc:name="convert to Byte Array"/>
+        <flow-ref name="identify-data" doc:name="identify-data"/>
+        <flow-ref name="insert-data" doc:name="insert-data"/>
+    </sub-flow>
+</mule>

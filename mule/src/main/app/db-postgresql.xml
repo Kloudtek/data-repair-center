@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
   -->
 
 <mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:db="http://www.mulesoft.org/schema/mule/db"
@@ -37,7 +37,6 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
         </db:delete>
         <logger category="drc.db" message="Deleted data #[flowVars.id]" level="INFO" doc:name="Logger"/>
     </sub-flow>
-
 
     <sub-flow name="db-list">
         <enricher target="variable:count" doc:name="Message Enricher">

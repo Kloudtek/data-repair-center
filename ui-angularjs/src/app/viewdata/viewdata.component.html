@@ -1,0 +1,137 @@
+<!--
+  ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
+  -->
+<div class="mb10">
+    <p-breadcrumb [model]="bcMenu" [home]="bcHomeMenu"></p-breadcrumb>
+</div>
+
+<div *ngIf="data != null">
+    <div class="ui-grid ui-grid-responsive ui-grid-pad">
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Id:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                {{data.id}}
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Retries:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                {{data.retry}}
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                <span class="valign">Business Id:</span>
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                <span *ngIf="!editing">{{data.businessId}}</span>
+                <input type="text" pInputText *ngIf="editing" [(ngModel)]="dataEdit.businessId" style="width: 90%" />
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Correlation Id:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                <span *ngIf="!editing">{{data.correlationId}}</span>
+                <input type="text" pInputText *ngIf="editing" [(ngModel)]="dataEdit.correlationId"/>
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Mime Type:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                <span *ngIf="!editing">{{data.mimeType}}</span>
+                <input type="text" pInputText *ngIf="editing" [(ngModel)]="dataEdit.mimeType" (change)="mimeTypeChanged($event)"/>
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Data Type:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                <span *ngIf="!editing">{{data.dataType}}</span>
+                <input type="text" pInputText *ngIf="editing" [(ngModel)]="dataEdit.dataType"/>
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Origin:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                <span *ngIf="!editing">{{data.origin}}</span>
+                <input type="text" pInputText *ngIf="editing" [(ngModel)]="dataEdit.origin"/>
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Origin Id:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                <span *ngIf="!editing">{{data.originId}}</span>
+                <input type="text" pInputText *ngIf="editing" [(ngModel)]="dataEdit.originId"/>
+            </div>
+        </div>
+        <div class="ui-grid-col-6">
+            <div class="ui-grid-col-4 bold lh2e">
+                Timestamp:
+            </div>
+            <div class="ui-grid-col-8 lh2e">
+                {{data.timestamp}}
+            </div>
+        </div>
+    </div>
+    <div class="mt10">
+        <p-fieldset p-fieldset legend="Metadata" toggleable="true">
+            <pre *ngIf="!editing">{{metadataJson}}</pre>
+            <textarea *ngIf="editing" pInputTextarea autoResize="autoResize" style="width: 100%; height: 10em" [(ngModel)]="dataEditMetadata"></textarea>
+        </p-fieldset>
+    </div>
+    <div class="mt10 mb10">
+        <p-fieldset p-fieldset legend="Data" toggleable="true">
+            <pre *ngIf="!editing">{{dataDisplay}}</pre>
+            <div *ngIf="editing">
+                <p-inputSwitch onLabel="Text" offLabel="Raw (base64)" [(ngModel)]="nonRawData" (onChange)="dataSwitchChanged($event)" *ngIf="editDataIsText"></p-inputSwitch>
+                <span *ngIf="!editDataIsText" class="bold">Raw data (base 64)</span>
+            </div>
+            <div *ngIf="editing">
+                <textarea *ngIf="editing" pInputTextarea autoResize="autoResize" style="width: 100%; height: 10em" [(ngModel)]="dataEditField"></textarea>
+            </div>
+        </p-fieldset>
+    </div>
+    <div class="ui-grid ui-grid-responsive ui-grid-pad" *ngIf="!editing">
+        <div class="ui-grid-col-3">
+            &nbsp;
+        </div>
+        <div class="ui-grid-col-2">
+            <button pButton type="button" label="Edit" icon="fa-edit" class="center w90 mb5" (click)="edit()"></button>
+        </div>
+        <div class="ui-grid-col-2">
+            <button pButton type="button" label="Delete" icon="fa-trash" class="center w90 mb5" (click)="delete()"></button>
+        </div>
+        <div class="ui-grid-col-2">
+            <button pButton type="button" label="Resubmit" icon="fa-send" class="center w90 mb5" (click)="resubmitData()"></button>
+        </div>
+        <div class="ui-grid-col-3">
+        </div>
+    </div>
+    <div class="ui-grid ui-grid-responsive ui-grid-pad" *ngIf="editing">
+        <div class="ui-grid-col-3">
+            &nbsp;
+        </div>
+        <div class="ui-grid-col-3">
+            <button pButton type="button" label="Cancel" icon="fa-undo" class="center w90 mb5" (click)="cancelEdit()"></button>
+        </div>
+        <div class="ui-grid-col-3">
+            <button pButton type="button" label="Save" icon="fa-floppy-o" class="center w90 mb5" (click)="saveEdit()"></button>
+        </div>
+        <div class="ui-grid-col-3">
+        </div>
+    </div>
+    <p-confirmDialog header="Confirmation" icon="fa fa-question-circle" width="425"></p-confirmDialog>
+</div>

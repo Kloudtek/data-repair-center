@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016. Kloudtek Software Solutions Ltd
+ * Copyright (c) 2017. Kloudtek Software Solutions Ltd
  */
 
 .acenter {
@@ -10,10 +10,50 @@
     transform: translate(-50%, -50%);
 }
 
+button.center {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
 .center {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
+}
+
+.lh2e {
+    line-height: 2em;
+}
+
+.valign {
+    position: relative;
+    top: 50%;
+    transform: perspective(1px) translateY(-50%);
+}
+
+.w90 {
+    width: 90%;
+}
+
+.mt10 {
+    margin-top: 10px;
+}
+
+.mb5 {
+    margin-bottom: 5px;
+}
+
+.mb10 {
+    margin-bottom: 10px;
+}
+
+.mr10 {
+    margin-right: 10px;
+}
+
+.bold {
+    font-weight: bold;
 }
 
 footer {

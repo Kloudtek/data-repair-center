@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
   -->
 
 <mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
@@ -10,8 +10,6 @@
       xmlns:cors="http://www.mulesoft.org/schema/mule/cors" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
-
-
 http://www.mulesoft.org/schema/mule/cors http://www.mulesoft.org/schema/mule/cors/current/mule-cors.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
     <apikit:config name="api-config" raml="api.raml" consoleEnabled="false" doc:name="Router"/>
@@ -57,11 +55,21 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
         </choice>
     </flow>
 
+    <flow name="options:/messages/{id}:api-config">
+        <logger category="drc.rest" message="CORS preflight for #[message.inboundProperties.'http.uri.params'.id]" level="INFO" doc:name="Logger"/>
+    </flow>
+
     <flow name="post:/messages/{id}:api-config">
         <set-variable variableName="id" value="#[message.inboundProperties.'http.uri.params'.id]" doc:name="Set 'id'"/>
         <flow-ref name="db-get" doc:name="db-get"/>
         <flow-ref name="prepareForRetry" doc:name="prepareForRetry"/>
         <flow-ref name="send-data" doc:name="send-data"/>
+    </flow>
+
+    <flow name="delete:/messages/{id}:api-config">
+        <set-variable variableName="id" value="#[message.inboundProperties.'http.uri.params'.id]" doc:name="Set 'id'"/>
+        <flow-ref name="db-delete" doc:name="db-get"/>
+        <set-payload value="#[null]" doc:name="Set Payload"/>
     </flow>
 
     <apikit:mapping-exception-strategy name="api-apiKitGlobalExceptionMapping">
