@@ -16,4 +16,7 @@ http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/
         <flow-ref name="sqs-consume-dlq"/>
         <exception-strategy ref="global-exception-strategy" doc:name="Reference Exception Strategy"/>
     </flow>
+    <sub-flow name="notify-message-received">
+        <logger level="INFO" message="MESSAGE RECEIVED"/>
+    </sub-flow>
 </mule>

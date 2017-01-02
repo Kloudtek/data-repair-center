@@ -39,5 +39,6 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
         <object-to-byte-array-transformer doc:name="convert to Byte Array"/>
         <flow-ref name="identify-data" doc:name="identify-data"/>
         <flow-ref name="insert-data" doc:name="insert-data"/>
+        <flow-ref name="notify-message-received" doc:name="notify-message-received"/>
     </sub-flow>
 </mule>
