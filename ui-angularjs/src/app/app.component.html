@@ -1,0 +1,28 @@
+<!--
+  ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
+  -->
+
+<h3 class="center">
+  Data Repair Center
+</h3>
+
+<p-blockUI [blocked]="loading"></p-blockUI>
+
+<p-growl [value]="msgs" life="4000"></p-growl>
+
+<div class="acenter" *ngIf="loading">
+    <div>
+        <img src="assets/gear.svg"/>
+    </div>
+    <div class="center">
+        ... Loading ...
+    </div>
+</div>
+
+<main>
+	<router-outlet></router-outlet>
+</main>
+
+<footer class="mt10">
+    © 2016 <a href="http://www.kloudtek.com">Kloudtek Software Solutions Ltd</a>
+</footer>

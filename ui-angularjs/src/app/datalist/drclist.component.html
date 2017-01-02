@@ -1,0 +1,19 @@
+<!--
+  ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
+  -->
+
+<div class="mb10">
+    <p-breadcrumb [model]="bcMenu" [home]="bcHomeMenu"></p-breadcrumb>
+</div>
+<p-dataTable [value]="list" [lazy]="true" [rows]="10" [paginator]="true" [totalRecords]="count" (onLazyLoad)="lazyLoad($event)"
+             resizableColumns="true" selectionMode="single" [responsive]="true" [(selection)]="selection"
+             (onRowSelect)="onRowSelect($event)" *ngIf="selection == null">
+    <header>
+        <button type="button" pButton (click)="load()" icon="fa-refresh"></button>
+    </header>
+    <p-column field="timestamp" header="Timestamp"></p-column>
+    <p-column field="businessId" header="Business Id"></p-column>
+    <p-column field="dataType" header="Data Type"></p-column>
+    <p-column field="correlationId" header="Correlation Id"></p-column>
+    <p-column field="retry" header="Retries"></p-column>
+</p-dataTable>
