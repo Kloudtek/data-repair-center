@@ -1,3 +1,1 @@
-Data Repair Center is licensed under the CPAL license: https://opensource.org/licenses/CPAL-1.0
-
-Attributions must done to Kloudtek (http://www.kloudtek.com)
+Data Repair Center is licensed under the apache license: https://www.apache.org/licenses/LICENSE-2.0
