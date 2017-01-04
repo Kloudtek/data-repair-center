@@ -8,15 +8,17 @@
 	  xmlns:secure-property-placeholder="http://www.mulesoft.org/schema/mule/secure-property-placeholder"
 	  xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
 	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cors="http://www.mulesoft.org/schema/mule/cors"
-	  xmlns:spring="http://www.springframework.org/schema/beans"
+	  xmlns:spring="http://www.springframework.org/schema/beans" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
 	  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.mulesoft.org/schema/mule/cors http://www.mulesoft.org/schema/mule/cors/current/mule-cors.xsd
 http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
 http://www.mulesoft.org/schema/mule/secure-property-placeholder http://www.mulesoft.org/schema/mule/secure-property-placeholder/current/mule-secure-property-placeholder.xsd">
 	<http:listener-config name="api-httpListenerConfig" host="${http.host}" port="${http.port}" doc:name="HTTP Listener Configuration"/>
 	<secure-property-placeholder:config name="Secure_Property_Placeholder" key="${mule.key}" location="config-${mule.env}.properties" ignoreResourceNotFound="true"/>
 	<sqs:config name="Amazon_SQS__Configuration" accessKey="${sqs.accesskey}" secretKey="${sqs.secretkey}" doc:name="Amazon SQS: Configuration" url="${sqs.queueUrl}"/>
+	<apikit:config name="api-config" raml="drc.raml" consoleEnabled="false" doc:name="Router"/>
 	<cors:config name="corsConfig" doc:name="Cors">
 		<cors:origins>
 			<cors:origin url="${http.cors.origin}" accessControlMaxAge="${http.cors.age}">
@@ -34,9 +36,17 @@ http://www.mulesoft.org/schema/mule/secure-property-placeholder http://www.mules
 		</cors:origins>
 	</cors:config>
 	<spring:beans>
-		<spring:import resource="classpath:drc-db-postgresql.xml"/>
+		<!-- Handles REST APIs through APIKit -->
+		<spring:import resource="classpath:drc-rest.xml"/>
+		<!-- Handles REST APIs exceptions through APIKit -->
+		<spring:import resource="classpath:drc-rest-exceptions.xml"/>
+		<!-- Shared DRC Logic -->
 		<spring:import resource="classpath:drc-logic.xml"/>
+		<!-- Used to send messages to AWS SQS -->
 		<spring:import resource="classpath:drc-aws-sqs-sender.xml"/>
+		<!-- Used to received messages to AWS SQS -->
 		<spring:import resource="classpath:drc-aws-sqs-consumer.xml"/>
+		<!-- Used to store data in a postgresql database -->
+		<spring:import resource="classpath:drc-db-postgresql.xml"/>
 	</spring:beans>
 </mule>
