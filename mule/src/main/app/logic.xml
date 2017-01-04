@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:spring="http://www.springframework.org/schema/beans"
+	  xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
+	  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd">
+	<!-- Analyse data -->
+	<sub-flow name="identify-data">
+		<set-variable variableName="originId" value="#[flowVars.metadata.drcOriginId]" doc:name="Set 'originId'"/>
+		<set-variable variableName="businessId" value="#[flowVars.metadata.drcBusinessId]" doc:name="Set 'businessId'"/>
+		<set-variable variableName="correlationId" value="#[flowVars.metadata.drcCorrelationId]" doc:name="Set 'correlationId'"/>
+		<set-variable variableName="mimeType" value="#[flowVars.metadata.drcMimeType]" doc:name="Set 'correlationId'"/>
+		<set-variable variableName="retry" value="#[flowVars.metadata.drcRetry]" doc:name="Set 'correlationId'"/>
+	</sub-flow>
+	<!-- Used to route data to the correct outbound system -->
+	<flow name="route-data">
+		<logger category="drc.sender.router" message="Sending payload #[flowVars.id]" level="DEBUG" doc:name="Logger"/>
+		<choice doc:name="Choice">
+			<when expression="#[payload.origin == 'sqs']">
+				<flow-ref name="send-sqs" doc:name="send-sqs"/>
+			</when>
+			<otherwise>
+				<set-payload value="#[payload.origin]" doc:name="Set origin"/>
+				<component doc:name="Throw MuleMessageNotFoundException" class="com.kloudtek.drc.mule.UnsupportedOriginException"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<!-- Consumes from a dead letter queue -->
+	<flow name="sqs-consume-dlq-devqueue">
+		<sqs:receive-messages config-ref="Amazon_SQS__Configuration" queueUrl="${sqs.queueUrl}" doc:name="Amazon SQS (Streaming)" visibilityTimeout="2"/>
+		<flow-ref name="sqs-consume-dlq"/>
+		<exception-strategy ref="global-exception-strategy" doc:name="Reference Exception Strategy"/>
+	</flow>
+	<!-- Notify users when data received -->
+	<sub-flow name="notify-message-received">
+		<logger level="INFO" message="MESSAGE RECEIVED"/>
+	</sub-flow>
+</mule>

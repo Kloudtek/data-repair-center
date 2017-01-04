@@ -3,20 +3,17 @@
   ~ Copyright (c) 2017. Kloudtek Software Solutions Ltd
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <artifactId>data-repair-center-parent</artifactId>
+        <groupId>com.kloudtek.data-repair-center</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.kloudtek.data-repair-center</groupId>
     <artifactId>data-repair-center-mule</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <packaging>mule</packaging>
     <name>Data Repair Center - Mule</name>
-    <licenses>
-        <license>
-            <name>APSL-2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
-        </license>
-    </licenses>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -85,16 +82,16 @@
 
     <!-- Mule Dependencies -->
     <dependencies>
+        <dependency>
+            <groupId>com.kloudtek.data-repair-center</groupId>
+            <artifactId>data-repair-center-lib</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/postgresql/postgresql -->
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>9.1-901-1.jdbc4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.kloudtek.ktutils</groupId>
-            <artifactId>ktutils-core</artifactId>
-            <version>1.2.13</version>
         </dependency>
         <!-- Xml configuration -->
         <dependency>
@@ -205,7 +202,7 @@
             <version>${mule.version}</version>
             <scope>provided</scope>
         </dependency>
-    <dependency>
+        <dependency>
             <groupId>org.mule.modules</groupId>
             <artifactId>mule-module-json</artifactId>
             <version>${mule.version}</version>

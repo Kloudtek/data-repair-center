@@ -8,7 +8,6 @@
       xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-
 http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd">
     <flow name="send-sqs">
         <set-variable variableName="queueUrl" value="#[payload.originId]" doc:name="Variable"/>

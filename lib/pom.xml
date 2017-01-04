@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>data-repair-center-parent</artifactId>
+        <groupId>com.kloudtek.data-repair-center</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>data-repair-center-lib</artifactId>
+
+    <properties>
+        <mule.version>3.8.3</mule.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.kloudtek.ktutils</groupId>
+            <artifactId>ktutils-core</artifactId>
+            <version>1.2.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mule</groupId>
+            <artifactId>mule-core</artifactId>
+            <version>3.8.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-sqs</artifactId>
+            <version>4.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-sqs</artifactId>
+            <version>3.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>mulesoft-releases</id>
+            <name>MuleSoft Releases Repository</name>
+            <url>http://repository.mulesoft.org/releases/</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+</project>
