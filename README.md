@@ -11,6 +11,8 @@ The implementation is currently doing with mule but a pure java version will be 
 
 ## Running example mule backend
 
+[You can see a video walkthrough of those instructions on YouTube](https://youtu.be/hc6K84HV0HE)
+
 In order to build and run the example mule application, you will need to have installed:
 
 - [vagrant](https://www.vagrantup.com/) (and we recommend you install [vagrant-cachier](https://github.com/fgrehm/vagrant-cachier) as well, but it's not mandatory). 
