@@ -8,7 +8,7 @@ APP_DB_PASS=drc
 APP_DB_NAME=drc
 
 # Edit the following to change the version of PostgreSQL that is installed
-PG_VERSION=9.4
+PG_VERSION=9.5
 
 ###########################################################
 # Changes below this line are probably not necessary
@@ -49,21 +49,11 @@ then
   exit
 fi
 
-PG_REPO_APT_SOURCE=/etc/apt/sources.list.d/pgdg.list
-if [ ! -f "$PG_REPO_APT_SOURCE" ]
-then
-  # Add PG apt repo:
-  echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" > "$PG_REPO_APT_SOURCE"
-
-  # Add PGDG repo key:
-  wget --quiet -O - https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
-fi
-
 # Update package list and upgrade all packages
 apt-get update
 apt-get -y upgrade
 
-apt-get -y install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION"
+apt-get -y install "postgresql-$PG_VERSION" "postgresql-contrib-$PG_VERSION" "openjdk-8-jdk" "activemq"
 
 PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
 PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
@@ -96,9 +86,19 @@ CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER
                                   TEMPLATE=template0;
 EOF
 
+PGUSER=$APP_DB_USER PGPASSWORD=$APP_DB_PASS psql -h localhost -p 5432 $APP_DB_NAME -f /vagrant/mule/src/sql/create-db-postgresql.sql
+
+# Configure activemq
+
+echo "Configuring activemq"
+sed -i s^127.0.0.1^0.0.0.0^ /etc/activemq/instances-available/main/activemq.xml
+ln -s /etc/activemq/instances-available/main /etc/activemq/instances-enabled/main
+echo "Restarting activemq"
+service activemq restart
+
 # Tag the provision time:
 date > "$PROVISIONED_ON"
 
-echo "Successfully created PostgreSQL dev virtual machine."
+echo "Successfully created virtual machine."
 echo ""
 print_db_usage

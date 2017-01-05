@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
+  -->
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:jbossts="http://www.mulesoft.org/schema/mule/jbossts" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:spring="http://www.springframework.org/schema/beans"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/jbossts http://www.mulesoft.org/schema/mule/jbossts/current/mule-jbossts.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <!-- Analyse data -->
+    <sub-flow name="analyze-data">
+        <set-variable variableName="originId" value="#[flowVars.metadata.drcOriginId]" doc:name="Set 'originId'"/>
+        <set-variable variableName="businessId" value="#[flowVars.metadata.drcBusinessId]" doc:name="Set 'businessId'"/>
+        <set-variable variableName="correlationId" value="#[flowVars.metadata.drcCorrelationId]" doc:name="Set 'correlationId'"/>
+        <set-variable variableName="mimeType" value="#[flowVars.metadata.drcMimeType]" doc:name="Set 'correlationId'"/>
+        <set-variable variableName="retry" value="#[flowVars.metadata.drcRetry]" doc:name="Set 'correlationId'"/>
+    </sub-flow>
+</mule>

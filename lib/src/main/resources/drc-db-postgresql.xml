@@ -7,17 +7,36 @@
 <mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:db="http://www.mulesoft.org/schema/mule/db"
       xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:spring="http://www.springframework.org/schema/beans"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
-    <db:generic-config name="Generic_Database_Configuration" url="${db.url}" driverClassName="org.postgresql.Driver" doc:name="Generic Database Configuration"/>
+    <db:generic-config name="Generic_Database_Configuration" doc:name="Generic Database Configuration" dataSource-ref="dataSource"/>
+    <spring:beans>
+        <spring:bean id="dataSource" class="bitronix.tm.resource.jdbc.PoolingDataSource" init-method="init" destroy-method="close">
+            <spring:property name="uniqueName" value="pg" />
+            <spring:property name="className" value="bitronix.tm.resource.jdbc.lrc.LrcXADataSource" />
+            <spring:property name="maxPoolSize" value="5" />
+            <spring:property name="testQuery" value="SELECT 1" />
+            <spring:property name="allowLocalTransactions" value="true" />
+            <spring:property name="driverProperties">
+                <spring:props>
+                    <spring:prop key="user">${db.user}</spring:prop>
+                    <spring:prop key="password">${db.password}</spring:prop>
+                    <spring:prop key="url">${db.url}</spring:prop>
+                    <spring:prop key="driverClassName">org.postgresql.Driver</spring:prop>
+                </spring:props>
+            </spring:property>
+        </spring:bean>
+    </spring:beans>
 
     <sub-flow name="db-insert">
         <logger category="drc.db" message="Persisting data (pre-conversion) for #[flowVars.id]: #[payload]" level="DEBUG" doc:name="Logger"/>
         <flow-ref name="convertMetadataToJson" doc:name="convertMetadataToJson"/>
         <db:insert config-ref="Generic_Database_Configuration" doc:name="Insert data in db">
             <db:parameterized-query><![CDATA[INSERT INTO DATA_REPAIR_QUEUE (id,timestamp,bid,mime_type,data_type,origin,origin_id,retry,cid,data,metadata)
-             VALUES ( #[flowVars.id], #[flowVars.timestamp], #[flowVars.businessId], #[flowVars.mimeType], #[flowVars.dataType], #[flowVars.origin], #[flowVars.originId], #[flowVars.retry], #[flowVars.correlationId], #[payload], #[flowVars.metaAsJson] )]]></db:parameterized-query>
+             VALUES ( #[flowVars.id], #[new java.sql.Timestamp(flowVars.timestamp.getTime())], #[flowVars.businessId], #[flowVars.mimeType], #[flowVars.dataType], #[flowVars.origin], #[flowVars.originId], #[flowVars.retry], #[flowVars.correlationId], #[payload], #[flowVars.metaAsJson] )]]></db:parameterized-query>
         </db:insert>
     </sub-flow>
 

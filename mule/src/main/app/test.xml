@@ -4,20 +4,33 @@
   ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
   -->
 
-<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:jbossts="http://www.mulesoft.org/schema/mule/jbossts" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
       xmlns:http="http://www.mulesoft.org/schema/mule/http"
       xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
-http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/jbossts http://www.mulesoft.org/schema/mule/jbossts/current/mule-jbossts.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
     <flow name="testFlow">
         <http:listener config-ref="api-httpListenerConfig" path="/test" doc:name="HTTP"/>
-        <sqs:send-message config-ref="Amazon_SQS__Configuration" queueUrl="https://sqs.us-east-1.amazonaws.com/148911335818/devDQLTest" doc:name="Amazon SQS"/>
+        <set-property propertyName="drcBusinessId" value="SomeBusinessId123" doc:name="Property drcBusinessId"/>
+        <set-property propertyName="drcOriginId" value="devDQLTest" doc:name="Property drcOriginId"/>
+        <set-property propertyName="drcMimeType" value="application/json" doc:name="Property drcOriginId"/>
+        <object-to-byte-array-transformer doc:name="Object to Byte Array"/>
+        <jms:outbound-endpoint queue="devDQLTest" connector-ref="Active_MQ" doc:name="JMS"/>
     </flow>
-    <flow name="sqs-test">
-        <sqs:receive-messages config-ref="Amazon_SQS__Configuration" queueUrl="https://sqs.us-east-1.amazonaws.com/148911335818/devDQLTest" doc:name="Amazon SQS (Streaming)" preserveMessages="true" visibilityTimeout="2"/>
+
+    <flow name="mq-test">
+        <jms:inbound-endpoint queue="devDQLTest" connector-ref="Active_MQ" doc:name="JMS">
+            <jms:transaction action="ALWAYS_BEGIN"/>
+        </jms:inbound-endpoint>
+        <byte-array-to-string-transformer doc:name="Byte Array to String"/>
         <logger message="SQS Received from test queue: #[payload]" doc:name="Logger" category="test" level="INFO"/>
         <set-payload value="#[payload]" mimeType="application/json" doc:name="Set Payload"/>
         <dw:transform-message doc:name="Transform Message">
@@ -30,17 +43,16 @@ payload]]></dw:set-payload>
         <choice doc:name="Choice">
             <when expression="#[payload.valid == 'true']">
                 <logger message="payload is valid: #[payload]" level="INFO" doc:name="Logger"/>
-                <sqs:delete-message config-ref="Amazon_SQS__Configuration" doc:name="Delete message" queueUrl="https://sqs.us-east-1.amazonaws.com/148911335818/devDQLTest" />
             </when>
             <otherwise>
                 <logger message="payload is not valid: #[payload]" level="INFO" doc:name="Logger"/>
+                <scripting:component doc:name="Script">
+                    <scripting:script engine="Groovy"><![CDATA[throw new IllegalArgumentException('Invalid payload')]]></scripting:script>
+                </scripting:component>
             </otherwise>
         </choice>
-<!--
-        <set-variable variableName="metadata" value="#[message.inboundProperties.properties]" doc:name="Set metadata"/>
-        <set-variable variableName="origin" value="sqs" doc:name="Set origin"/>
-        <set-variable variableName="originId" value="devDQLTest" doc:name="Set origin"/>
--->
-        <exception-strategy ref="global-exception-strategy" doc:name="Reference Exception Strategy"/>
+        <default-exception-strategy>
+            <rollback-transaction exception-pattern="*"/>
+        </default-exception-strategy>
     </flow>
 </mule>

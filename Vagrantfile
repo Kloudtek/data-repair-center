@@ -16,6 +16,12 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision :shell, :path => "vagrant-setup.sh"
   config.vm.network "forwarded_port", guest: 5432, host: 15432
+  config.vm.network "forwarded_port", guest: 61616, host: 61616
+  config.vm.network "private_network", ip: "192.168.33.10"
+
+    if Vagrant.has_plugin?("vagrant-cachier")
+      config.cache.scope = :box
+    end
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs

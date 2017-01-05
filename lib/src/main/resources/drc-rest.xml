@@ -7,10 +7,12 @@
       xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core"
       xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
       xmlns:cors="http://www.mulesoft.org/schema/mule/cors" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.mulesoft.org/schema/mule/cors http://www.mulesoft.org/schema/mule/cors/current/mule-cors.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
     <flow name="api-main">
         <http:listener config-ref="api-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
@@ -20,13 +22,15 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
     </flow>
 
     <flow name="put:/messages:api-config">
-        <logger category="drc.rest" message="Inserting data: #[message] : #[payload]" level="DEBUG" doc:name="Logger"/>
-        <flow-ref name="convertJsonToVars" doc:name="convertVarsToJson"/>
-        <flow-ref name="insert-data" doc:name="insert-data"/>
-        <dw:transform-message doc:name="Transform Message">
-            <dw:set-payload resource="classpath:data-insert-results.dwl"/>
-        </dw:transform-message>
-        <exception-strategy ref="global-exception-strategy" doc:name="Reference Exception Strategy"/>
+        <ee:multi-transactional action="ALWAYS_BEGIN" doc:name="Transactional">
+            <logger category="drc.rest" message="Inserting data: #[message] : #[payload]" level="DEBUG" doc:name="Logger"/>
+            <flow-ref name="convertJsonToVars" doc:name="convertVarsToJson"/>
+            <flow-ref name="insert-data" doc:name="insert-data"/>
+            <dw:transform-message doc:name="Transform Message">
+                <dw:set-payload resource="classpath:data-insert-results.dwl"/>
+            </dw:transform-message>
+            <exception-strategy ref="api-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+        </ee:multi-transactional>
     </flow>
 
     <flow name="get:/messages:api-config">
@@ -42,18 +46,21 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
     </flow>
 
     <flow name="put:/messages/{id}:api-config">
-        <choice doc:name="Choice">
-            <when expression="#[message.inboundProperties.'http.query.params'.submit]">
-                <flow-ref name="convertPayloadToJava" doc:name="convertPayloadToJava"/>
-                <flow-ref name="prepareForRetry" doc:name="prepareForRetry"/>
-                <flow-ref name="send-data" doc:name="send-data"/>
-            </when>
-            <otherwise>
-                <set-variable variableName="id" value="#[message.inboundProperties.'http.uri.params'.id]" doc:name="Set 'id'"/>
-                <flow-ref name="convertJsonToVars" doc:name="convertVarsToJson"/>
-                <flow-ref name="db-update" doc:name="db-update"/>
-            </otherwise>
-        </choice>
+        <ee:multi-transactional action="ALWAYS_BEGIN" doc:name="Transactional">
+            <choice doc:name="Choice">
+                <when expression="#[message.inboundProperties.'http.query.params'.submit]">
+                    <flow-ref name="convertPayloadToJava" doc:name="convertPayloadToJava"/>
+                    <flow-ref name="prepareForRetry" doc:name="prepareForRetry"/>
+                    <flow-ref name="send-data" doc:name="send-data"/>
+                </when>
+                <otherwise>
+                    <set-variable variableName="id" value="#[message.inboundProperties.'http.uri.params'.id]" doc:name="Set 'id'"/>
+                    <object-to-string-transformer mimeType="application/json"/>
+                    <flow-ref name="convertJsonToVars" doc:name="convertVarsToJson"/>
+                    <flow-ref name="db-update" doc:name="db-update"/>
+                </otherwise>
+            </choice>
+        </ee:multi-transactional>
     </flow>
 
     <flow name="options:/messages/{id}:api-config">
@@ -69,7 +76,9 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 
     <flow name="delete:/messages/{id}:api-config">
         <set-variable variableName="id" value="#[message.inboundProperties.'http.uri.params'.id]" doc:name="Set 'id'"/>
+        <logger message="Deleting data #[flowVars.id]" level="DEBUG"/>
         <flow-ref name="db-delete" doc:name="db-get"/>
         <set-payload value="#[null]" doc:name="Set Payload"/>
+        <logger message="Deleted data #[flowVars.id]" level="INFO"/>
     </flow>
 </mule>

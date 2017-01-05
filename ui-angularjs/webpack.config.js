@@ -15,7 +15,7 @@ var webpackConfig = {
 
     output: {
         publicPath: '',
-        path: path.resolve(__dirname, './dist'),
+        path: path.resolve(__dirname, './target/dist/drcui'),
     },
 
     plugins: [

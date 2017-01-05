@@ -4,25 +4,24 @@
   ~ Copyright (c) 2016. Kloudtek Software Solutions Ltd
   -->
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:jbossts="http://www.mulesoft.org/schema/mule/jbossts" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:spring="http://www.springframework.org/schema/beans"
-	  xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs"
+	  xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	  xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
 	  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd">
-	<!-- Analyse data -->
-	<sub-flow name="identify-data">
-		<set-variable variableName="originId" value="#[flowVars.metadata.drcOriginId]" doc:name="Set 'originId'"/>
-		<set-variable variableName="businessId" value="#[flowVars.metadata.drcBusinessId]" doc:name="Set 'businessId'"/>
-		<set-variable variableName="correlationId" value="#[flowVars.metadata.drcCorrelationId]" doc:name="Set 'correlationId'"/>
-		<set-variable variableName="mimeType" value="#[flowVars.metadata.drcMimeType]" doc:name="Set 'correlationId'"/>
-		<set-variable variableName="retry" value="#[flowVars.metadata.drcRetry]" doc:name="Set 'correlationId'"/>
-	</sub-flow>
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/jbossts http://www.mulesoft.org/schema/mule/jbossts/current/mule-jbossts.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
 	<!-- Used to route data to the correct outbound system -->
 	<flow name="route-data">
 		<logger category="drc.sender.router" message="Sending payload #[flowVars.id]" level="DEBUG" doc:name="Logger"/>
 		<choice doc:name="Choice">
-			<when expression="#[payload.origin == 'sqs']">
-				<flow-ref name="send-sqs" doc:name="send-sqs"/>
+			<when expression="#[payload.origin == 'jms']">
+				<flow-ref name="drc-send-jms" doc:name="drc-send-jms"/>
 			</when>
 			<otherwise>
 				<set-payload value="#[payload.origin]" doc:name="Set origin"/>
@@ -31,13 +30,19 @@ http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/
 		</choice>
 	</flow>
 	<!-- Consumes from a dead letter queue -->
-	<flow name="sqs-consume-dlq-devqueue">
-		<sqs:receive-messages config-ref="Amazon_SQS__Configuration" queueUrl="${sqs.queueUrl}" doc:name="Amazon SQS (Streaming)" visibilityTimeout="2"/>
-		<flow-ref name="sqs-consume-dlq"/>
+	<flow name="activemq-consume-dlq">
+		<jms:inbound-endpoint queue="ActiveMQ.DLQ" connector-ref="Active_MQ" doc:name="JMS">
+			<ee:multi-transaction action="ALWAYS_BEGIN"/>
+		</jms:inbound-endpoint>
+		<flow-ref name="jms-consume-dlq" doc:name="jms-consume-dlq"/>
 		<exception-strategy ref="global-exception-strategy" doc:name="Reference Exception Strategy"/>
 	</flow>
 	<!-- Notify users when data received -->
 	<sub-flow name="notify-message-received">
-		<logger level="INFO" message="MESSAGE RECEIVED"/>
+		<logger level="INFO" message="MESSAGE RECEIVED" doc:name="Logger"/>
 	</sub-flow>
+	<!-- Exception strategy -->
+	<rollback-exception-strategy name="global-exception-strategy">
+		<logger level="ERROR" doc:name="Logger" message="#[org.mule.util.ExceptionUtils.getFullStackTrace(exception)]"/>
+	</rollback-exception-strategy>
 </mule>
